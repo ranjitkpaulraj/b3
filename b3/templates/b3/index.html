@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>backblaze browser</title>
+    {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'b3/images/b3_16x.png' %}">
+    <link rel="stylesheet" href="{% static 'b3/style.css' %}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script> -->
+    <!-- <script src="{% static 'b3/b3.js' %}"></script> -->
+    <!-- <script type="module" src="{% static 'b3/b3.js' %}"></script> -->
+    <script type="module" src="{% static 'b3/ui.js' %}"></script>
+
+</head>
+<body>
+    {% csrf_token %}
+    <div class="frame" id="top_frame">
+        <div id="logo_box">
+            <img src="{% static 'b3/images/b3_64x.png' %}" alt="Logo" style="padding:5px">
+        </div>
+        <div id="control_frame">
+            <div>
+                <button class="control_buttons" id="settings_button">&nbsp;</button>
+                <button class="control_buttons" id="download_button" title="Download selected files/folders" onclick="onDownload()">&nbsp;</button>
+                <button class="control_buttons" id="upload_button" title="Upload to cloud" onclick="onUpload()">&nbsp;</button>
+                <button class="control_buttons" id="delete_button" title="Delete selected files/folders" onclick="onDelete()">&nbsp;</button>
+                <input type="file" id="filesUpload" multiple style="display: none;">
+                <input type="file" id="folderUpload" webkitdirectory style="display: none;">
+            </div>
+
+        </div>
+    </div>
+    <div id="address_box">
+        <span style="margin-left:50px; font-weight:bold; max-width:fit-content; user-select:none">Address:</span>
+        <span  id="address_value"></span>
+    </div>
+
+    <div  id="middle_frame">&nbsp;
+        <div  class="frame" id="left_frame">
+            {{ folder_list | safe}}
+        </div>
+        <div class="seperator_frame" id="separator" >&nbsp;
+        </div>
+        <div class="frame" id="right_frame">
+
+        </div>
+    </div>
+
+    <div id="bottom_frame">
+        <div id="progress_header">
+            <span> Tasks Progress</span>
+        </div>
+        <div id="progress_list"></div>
+        
+    </div>
+
+    <div id="upload_options" class="upload_modal">
+        <div class="upload_modal_content">
+            <span id="upload_modal_close" class="close">&times;</span>
+            <h2 style="text-align: center; color: rgb(29, 28, 28); font-weight: bolder; padding-bottom: 10px;">
+                Choose what to upload:</h2>
+            <button class="upload_option_buttons" id="upload_file" onclick="onFilesUpload()"
+            style="background-image: url({% static 'b3/images/file_128x.png' %})">Files</button>
+            <button class="upload_option_buttons" id="upload_folder" onclick="onFolderUpload()"
+            style="background-image: url({% static 'b3/images/folder_128x.png' %})">Folder</button>
+            <div id="upload_hint">Hint: Use drag&drop from file exploers to upload mix of multiple files and folders</div>
+        </div>
+        
+    </div>
+
+</body>
+</html>

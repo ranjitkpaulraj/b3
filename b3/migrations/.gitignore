@@ -1,0 +1,8 @@
+# Ignore migration files
+*
+
+# !!! Do not ignore migration files in the production repository !!!
+
+# Ignore everything except the following files
+!.gitignore
+!__init__.py
