@@ -21,7 +21,18 @@ def get_filesize_str(file_size, precision=0):
 
 
 class S3:
-    def __init__(self, key_pair, service_provider, service_region):
+    __handles = []
+
+    @staticmethod
+    def delete_handle(bucket_name):
+        """
+        Delete the S3 handle for the specified bucket name.
+        :param bucket_name: (str) S3 bucket name
+        """
+        S3.__handles = [h for h in S3.__handles if h['bucket'] != bucket_name]
+
+        
+    def __init__(self, key_pair, service_provider, service_region, bucket_name=None):
         """
         Initialize the S3 client with the provided credentials and service provider.
         :param key_pair: (str) Key pair in the format 'key_id:key_secret'
@@ -29,7 +40,12 @@ class S3:
         :param service_region: (str) Service region (e.g., 'us-west-1')
         """
 
-
+        if bucket_name:
+            handle = next((h for h in self.__handles if h['bucket'] == bucket_name), None)
+            if handle:
+                self.client = handle['handle']
+                return
+            
         key_id, key_secret = key_pair
   
         if service_provider == 'aws':
@@ -43,6 +59,11 @@ class S3:
         self.client = boto_client("s3", region_name=service_region, aws_access_key_id=key_id,
                               aws_secret_access_key=key_secret, endpoint_url=url, 
                               config=Config(signature_version='s3v4'))
+        
+        # Remove any existing handle for the same bucket
+        self.__handles = [h for h in self.__handles if h['bucket'] != bucket_name]
+        
+        self.__handles.append({'bucket': bucket_name, 'handle': self.client})
 
     def get_object_list(self, bucket_name, path_prefix, delimiter='', raw_list=False):
         """

@@ -9,16 +9,19 @@ import pytz
 
 from .models import Bucket
 
-# Create your views here.
+def get_s3_handle(bucket_name):
+    bucket = Bucket.objects.filter(name=bucket_name).first()
+    if not bucket:
+        return None
+    return S3((bucket.key_id, bucket.get_decrypted_secret_key()), bucket.service, bucket.region, bucket.name)
 
 
-key_pair = (os.getenv('S3_KEY'), os.getenv('S3_SECRET'))
-service_region = os.getenv('S3_REGION')
-service_provider = os.getenv('S3_PROVIDER')
-s3 = S3(key_pair, service_provider, service_region)
 
 def build_dir_tree(bucket_name, dir_name=''):
     html_str = ''
+    s3 = get_s3_handle(bucket_name)
+    if not s3:
+        return html_str
     dir_list, _ = s3.get_object_list(bucket_name, dir_name, '/')
     if dir_list:
         html_str += f'<ul class="dir_children">'
@@ -38,6 +41,9 @@ def convert_to_user_timezone(date_str, timezone):
 
 def build_dir_contents(bucket_name, dir_name='', timezone=''):
     html_str = ''
+    s3 = get_s3_handle(bucket_name)
+    if not s3:
+        return html_str
     folders, files = s3.get_object_list(bucket_name, dir_name, '/')
     html_str += '<table id="file_table">'
 
@@ -133,11 +139,16 @@ def download(request):
     if request.method == 'POST':
 
         post_data = json.loads(request.body.decode('utf-8'))
+        bucket = post_data.get('bucket')
 
         folder_list = json.loads(post_data.get('folder_list'))
         file_list = json.loads(post_data.get('file_list'))
 
         method = post_data.get('method')
+
+        s3 = get_s3_handle(bucket)
+        if not s3:
+            return HttpResponse(json.dumps({'result': f'error {bucket} not found'}), content_type='application/json')
         
         response = s3.get_signed_url(folder_list, file_list, method)
 
@@ -152,8 +163,13 @@ def download(request):
 def start_upload(request):
     if request.method == 'POST':
         post_data = json.loads(request.body.decode('utf-8'))
+        bucket = post_data.get('bucket')
         file_list = json.loads(post_data.get('file_list'))
         chunk_size = post_data.get('chunk_size')
+
+        s3 = get_s3_handle(bucket)
+        if not s3:
+            return HttpResponse(json.dumps({'result': f'error {bucket} not found'}), content_type='application/json')
 
         response = s3.start_upload(file_list, chunk_size)
 
@@ -172,6 +188,9 @@ def finish_upload(request):
         upload_id = post_data.get('upload_id')
         upload_parts = json.loads(post_data.get('parts'))
 
+        s3 = get_s3_handle(bucket)
+        if not s3:
+            return HttpResponse(json.dumps({'result': f'error {bucket} not found'}), content_type='application/json')
 
 
         s3.complete_upload(bucket, key, upload_id, upload_parts)
@@ -188,6 +207,11 @@ def delete(request):
         post_data = json.loads(request.body.decode('utf-8'))
 
         operation = post_data.get('operation')
+        bucket = post_data.get('bucket')
+
+        s3 = get_s3_handle(bucket)
+        if not s3:
+            return HttpResponse(json.dumps({'result': f'error {bucket} not found'}), content_type='application/json')
 
         if operation == 'prepare':
             folder_list = json.loads(post_data.get('folder_list'))

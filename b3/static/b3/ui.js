@@ -22,44 +22,49 @@ window.addEventListener('resize', function(event){
     resizePanels();
 })
 
-function dragElement(element, direction){
 
-    var md;
+function dragElement(element, direction) {
+    let md; // Mouse down data
     const left = document.getElementById("left_frame");
     const right = document.getElementById("right_frame");
 
+    element.addEventListener("mousedown", onMouseDown);
 
-    element.onmousedown = onMouseDown;
-
-    function onMouseDown(e){
-        md = {e,
+    function onMouseDown(e) {
+        e.preventDefault(); // Prevent text selection
+        md = {
+            e,
             offsetLeft: element.offsetLeft,
-            offsetTop: element.offsetTop,
             leftWidth: left.offsetWidth,
-            rightWidth: right.offsetWidth
+            rightWidth: right.offsetWidth,
         };
 
-        document.onmousemove = onMouseMove;
-        document.onmouseup = () => {
-            document.onmousemove = document.onmouseup = null;
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    }
+
+    function onMouseMove(e) {
+        const delta = {
+            x: e.clientX - md.e.clientX,
+        };
+
+        if (direction === "H") {
+            // Restrict movement within bounds
+            delta.x = Math.min(Math.max(delta.x, -md.leftWidth), md.rightWidth);
+
+            // Update element position and panel widths
+            element.style.left = md.offsetLeft + delta.x + "px";
+            left.style.width = md.leftWidth + delta.x + "px";
+            right.style.width = md.rightWidth - delta.x + "px";
         }
     }
 
-    function onMouseMove(e){
-        var delta = {
-            x: e.clientX - md.e.clientX,
-            y: e.clientY - md.e.clientY
-        };
-        if (direction === "H"){
-            delta.x = Math.min(Math.max(delta.x, -md.leftWidth), md.rightWidth);
-            element.style.left = md.offsetLeft + delta.x + "px";
-            left.style.width = (md.leftWidth + delta.x) + "px";
-            right.style.width = (md.rightWidth + delta.x) + "px"
-        }
-
+    function onMouseUp() {
+        // Remove event listeners to stop dragging
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
     }
 }
-
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -199,8 +204,10 @@ window.onFolderUpload = function (){
 
 async function initiateDelete(delete_list, delete_path){
     const csrfToken = $('[name="csrfmiddlewaretoken"]').val();
+    const bucket_name = delete_path.split('/')[0];
 
     const qData = {
+        bucket: bucket_name,
         delete_list: JSON.stringify(delete_list),
         operation: 'initiate',
     };
@@ -242,8 +249,10 @@ async function initiateDelete(delete_list, delete_path){
 
 async function prepareDelete(folder_list, file_list, delete_path){
     const csrfToken = $('[name="csrfmiddlewaretoken"]').val();
+    const bucket_name = delete_path.split('/')[0];
 
     const qData = {
+        bucket: bucket_name,
         folder_list: JSON.stringify(folder_list),
         file_list: JSON.stringify(file_list),
         operation: 'prepare',
@@ -345,7 +354,11 @@ window.onDownload = async function () {
         .filter(td_file => $(td_file.getElementsByTagName('input')[0]).is(':checked'))
         .map(td_file => td_file.id);
 
+    const current_path = document.getElementById('address_value').textContent;
+    const bucket_name = current_path.split('/')[0];
+
     const qData = {
+        bucket: bucket_name,
         folder_list: JSON.stringify(folder_list),
         file_list: JSON.stringify(file_list),
         method: 'get_object',

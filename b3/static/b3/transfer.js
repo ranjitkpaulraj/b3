@@ -148,8 +148,10 @@ async function upload(files) {
     const upload_path = document.getElementById('address_value').textContent;
     const file_array = Array.isArray(files) ? files : Array.from(files)
     const file_list = file_array.map(file => [upload_path + file.name, file.size]);
+    const bucket_name = upload_path.split('/')[0];
 
     const qData = {
+        bucket: bucket_name,
         file_list: JSON.stringify(file_list),
         chunk_size: upload_chunk_size,
     };
