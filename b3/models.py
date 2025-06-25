@@ -24,6 +24,7 @@ class Bucket(models.Model):
 
     REGION_CHOICES = (
         ('eu-central-003', 'EU (backblazeB2)'),
+        ('us-east-005', 'US East (backblazeB2)'),
         ('us-west-1', 'US West (N. California)'),
         ('eu-west-1', 'EU (Ireland)'),
         ('eu-central-1', 'EU (Frankfurt)'),
@@ -46,10 +47,10 @@ class Bucket(models.Model):
             self.secret_key = encrypt_secret_key(self.secret_key)
             super().save(*args, **kwargs)
 
-    def delete(self, using = ..., keep_parents = ...):
+    def delete(self, using = None, keep_parents = False):
         # Delete the S3 handle associated with this bucket
         S3.delete_handle(self.name)
-        return super().delete(using, keep_parents)
+        return super().delete(using=using, keep_parents=keep_parents)
     
 
     def get_decrypted_secret_key(self):
