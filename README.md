@@ -28,7 +28,7 @@ Additionally, `b3` simplifies bucket and object management with essential featur
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/b3.git
+git clone https://github.com/ranjitkpaulraj/b3.git
 cd b3
 ```
 
